@@ -1,27 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>Snake Game</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #111;
-    }
-    canvas {
-      border: 2px solid #fff;
-      background: #000;
-    }
-  </style>
+  <title>🐍 بازی مار نوکیا</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-
+  <div class="container">
+    <h1>🐍 بازی مار نوکیا</h1>
+    <h2 id="score">امتیاز: 0 | رکورد: 0</h2>
+    <div class="buttons">
+      <button id="startBtn">شروع / ریستارت</button>
+      <button id="pauseBtn">⏸ توقف / ادامه</button>
+    </div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+  </div>
+  <audio id="eatSound" src="eat.mp3"></audio>
+  <audio id="gameOverSound" src="gameover.mp3"></audio>
   <script src="snake.js"></script>
-  <script src="telegram-integration.js"></script>
 </body>
 </html>
