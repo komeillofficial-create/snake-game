@@ -2,48 +2,71 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 const box = 20;
-let snake = [{ x: 9 * box, y: 10 * box }];
-let direction;
-let food = {
-    x: Math.floor(Math.random() * 19 + 1) * box,
-    y: Math.floor(Math.random() * 19 + 1) * box
-};
+let snake, direction, food, score, game, speed;
+let highScore = localStorage.getItem("snakeHighScore") || 0;
+let isPaused = false;
 
-let score = 0;
-let highScore = 0;
+// صداها
+const eatSound = document.getElementById("eatSound");
+const gameOverSound = document.getElementById("gameOverSound");
 
-// کنترل جهت
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("pauseBtn").addEventListener("click", togglePause);
+
+function startGame() {
+    snake = [{ x: 9 * box, y: 10 * box }];
+    direction = null;
+    score = 0;
+    speed = 150;
+    food = randomFood();
+    updateScore();
+
+    if (game) clearInterval(game);
+    game = setInterval(draw, speed);
+}
+
+function togglePause() {
+    if (!game) return;
+    isPaused = !isPaused;
+}
+
+function randomFood() {
+    return {
+        x: Math.floor(Math.random() * 19 + 1) * box,
+        y: Math.floor(Math.random() * 19 + 1) * box
+    };
+}
+
 document.addEventListener("keydown", setDirection);
 
 function setDirection(event) {
-    if (event.key === "ArrowLeft" && direction !== "RIGHT") {
-        direction = "LEFT";
-    } else if (event.key === "ArrowUp" && direction !== "DOWN") {
-        direction = "UP";
-    } else if (event.key === "ArrowRight" && direction !== "LEFT") {
-        direction = "RIGHT";
-    } else if (event.key === "ArrowDown" && direction !== "UP") {
-        direction = "DOWN";
-    }
+    if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+    else if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+    else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+}
+
+function updateScore() {
+    document.getElementById("score").innerText =
+        "امتیاز: " + score + " | رکورد: " + highScore;
 }
 
 function draw() {
-    ctx.fillStyle = "black";
+    if (isPaused) return;
+
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // کشیدن مار
     for (let i = 0; i < snake.length; i++) {
-        ctx.fillStyle = (i === 0) ? "lime" : "white";
+        ctx.fillStyle = (i === 0) ? "#00ff88" : "#ffffff";
         ctx.fillRect(snake[i].x, snake[i].y, box, box);
-        ctx.strokeStyle = "black";
+        ctx.strokeStyle = "#111";
         ctx.strokeRect(snake[i].x, snake[i].y, box, box);
     }
 
-    // کشیدن غذا
     ctx.fillStyle = "red";
     ctx.fillRect(food.x, food.y, box, box);
 
-    // مختصات سر مار
     let snakeX = snake[0].x;
     let snakeY = snake[0].y;
 
@@ -52,50 +75,41 @@ function draw() {
     if (direction === "RIGHT") snakeX += box;
     if (direction === "DOWN") snakeY += box;
 
-    // اگر غذا خورد
     if (snakeX === food.x && snakeY === food.y) {
         score++;
+        eatSound.play();
         if (score > highScore) {
             highScore = score;
+            localStorage.setItem("snakeHighScore", highScore);
         }
-        document.getElementById("score").innerText = "امتیاز: " + score + " | رکورد: " + highScore;
+        updateScore();
+        food = randomFood();
 
-        food = {
-            x: Math.floor(Math.random() * 19 + 1) * box,
-            y: Math.floor(Math.random() * 19 + 1) * box
-        };
+        if (score % 5 === 0 && speed > 50) {
+            clearInterval(game);
+            speed -= 10;
+            game = setInterval(draw, speed);
+        }
     } else {
-        // دُم رو حذف کن
         snake.pop();
     }
 
-    // سر جدید اضافه کن
     let newHead = { x: snakeX, y: snakeY };
 
-    // گیم اور
     if (
         snakeX < 0 || snakeY < 0 ||
         snakeX >= canvas.width || snakeY >= canvas.height ||
         collision(newHead, snake)
     ) {
-        alert("بازی تمام شد! 😢");
-        snake = [{ x: 9 * box, y: 10 * box }];
-        direction = null;
-        score = 0;
-        document.getElementById("score").innerText = "امتیاز: " + score + " | رکورد: " + highScore;
+        clearInterval(game);
+        gameOverSound.play();
+        alert("💀 بازی تمام شد! امتیاز: " + score);
+        return;
     }
 
     snake.unshift(newHead);
 }
 
-// برخورد با خودش
 function collision(head, array) {
-    for (let i = 0; i < array.length; i++) {
-        if (head.x === array[i].x && head.y === array[i].y) {
-            return true;
-        }
-    }
-    return false;
+    return array.some(part => head.x === part.x && head.y === part.y);
 }
-
-setInterval(draw, 100);
